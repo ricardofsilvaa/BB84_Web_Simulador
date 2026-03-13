@@ -177,10 +177,34 @@
             padding: 1rem;
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 0.9rem;
-            color: #a78bfa;
             border: 1px solid #382e5a;
             margin: 1rem 0;
             word-break: break-all;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .qubit-chip {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.8rem;
+            background: #221939;
+            border: 1px solid #4f3a81;
+        }
+
+        .match-green {
+            background: #0f3b2a;
+            color: #9effb4;
+            font-weight: 600;
+            border-color: #2ecc71;
+        }
+
+        .intercepted-red {
+            background: #5a1e2e;
+            color: #ffa0b0;
+            font-weight: 600;
+            border-color: #e74c3c;
         }
 
         .button-glow {
@@ -243,8 +267,16 @@
             box-shadow: 0 0 10px red;
         }
 
-        /* seletor de qubits */
-        .qubit-selector {
+        /* seletor de qubits e percentual */
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .qubit-selector, .percent-selector {
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -252,10 +284,9 @@
             padding: 0.5rem 1rem;
             border-radius: 3rem;
             border: 1px solid #4d3a77;
-            margin-bottom: 1rem;
         }
 
-        .qubit-selector select {
+        .qubit-selector select, .percent-selector input {
             background: #2e2150;
             color: white;
             border: 1px solid #7b5cf0;
@@ -264,6 +295,7 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
+            width: 100px;
         }
 
         /* comparação bits */
@@ -277,6 +309,15 @@
             border-radius: 1rem;
             border: 1px solid #382e5a;
             margin-top: 0.5rem;
+        }
+
+        .match-ok {
+            color: #6fe7c5;
+            font-weight: 700;
+        }
+        .match-err {
+            color: #ff7791;
+            font-weight: 700;
         }
 
         footer {
@@ -372,8 +413,8 @@
     <!-- ========== SIMULADOR INTERATIVO ========== -->
     <h2>🧪 Laboratório quântico · Simulador BB84</h2>
     
-    <!-- Controles de quantidade e Eve -->
-    <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+    <!-- Controles de quantidade e Eve e percentual -->
+    <div class="control-row">
         <div class="qubit-selector">
             <label style="font-weight:500;">Número de qubits:</label>
             <select id="qubitCountSelect">
@@ -382,6 +423,10 @@
                 <option value="32">32</option>
                 <option value="64">64</option>
             </select>
+        </div>
+        <div class="percent-selector">
+            <label style="font-weight:500;">Captura da Eve (%):</label>
+            <input type="number" id="evePercent" min="0" max="100" value="50" step="1">
         </div>
         <div id="eveToggleBtn" class="eve-toggle-btn">
             <span class="indicator"></span>
@@ -395,19 +440,24 @@
             <div class="party-title">👩‍🔬 Alice · remetente</div>
             <div style="margin-bottom:1rem;">
                 <span class="badge">bits preparados: <span id="aliceBitsCount">0</span></span>
-                <span class="badge">bases usadas</span>
             </div>
-            <div id="aliceDisplay" class="qubit-row">—</div>
+            <div id="aliceDisplay" class="qubit-row"></div>
             <button class="button-glow" id="generateBtn">✨ Gerar qubits</button>
-            <div style="margin-top:1rem; font-size:0.9rem;">Bits e bases (Z=↕️, X=✖️)</div>
+            <div style="margin-top:1rem; font-size:0.9rem;">Bits e bases (0z,1x, etc.)</div>
         </div>
 
-        <!-- Canal (visual) -->
+        <!-- Canal + Eve (ordem invertida: Eve em cima) -->
         <div class="party-card" style="justify-content: center; display: flex; flex-direction: column;">
-            <div style="text-align: center;">
+            <!-- Eve (interceptação) em cima -->
+            <div style="margin-bottom:1rem;">
+                <span class="badge">👾 Eve (interceptação)</span>
+                <div id="eveDisplay" class="qubit-row" style="margin-top:0.5rem;">—</div>
+            </div>
+            <!-- Canal quântico abaixo -->
+            <div style="text-align: center; margin-top:0.5rem;">
                 <span style="font-size: 3rem;">🌀</span>
-                <div style="font-weight:600; margin:1rem 0;">CANAL QUÂNTICO</div>
-                <div style="margin-top:1rem; background:#00000030; border-radius:2rem; padding:0.8rem;">
+                <div style="font-weight:600; margin:0.5rem 0;">CANAL QUÂNTICO</div>
+                <div style="margin-top:0.5rem; background:#00000030; border-radius:2rem; padding:0.8rem;">
                     <span>📡 transmitidos: <span id="txCount">0</span></span><br>
                     <span id="eveCountDisplay">🕵️ interceptados: 0</span>
                 </div>
@@ -421,9 +471,9 @@
                 <span class="badge">medidas: <span id="bobMeasures">0</span></span>
                 <span class="badge">matches: <span id="matchCount">0</span></span>
             </div>
-            <div id="bobDisplay" class="qubit-row">—</div>
+            <div id="bobDisplay" class="qubit-row"></div>
             <button class="button-glow" id="measureBtn">📏 Medir com bases aleatórias</button>
-            <div style="margin-top:1rem; font-size:0.9rem;">resultado das medições (bits)</div>
+            <div style="margin-top:1rem; font-size:0.9rem;">resultado das medições (bits e bases)</div>
         </div>
     </div>
 
@@ -558,11 +608,16 @@
         let bobBases = [];            // bases que bob escolhe para medir
         let bobResults = [];          // bits que bob obteve (após medição)
         let eveActive = false;        // espiã ativada?
-        let transmitted = 0;           // contador estético (não interfere no cálculo)
+        let evePercent = 50;           // percentual de captura (0-100)
+        let eveIntercepted = [];       // posições que eve interceptou (booleano)
+        let eveBits = [];              // bits que eve obteve (para exibição)
+        let eveBases = [];             // bases que eve usou
+        let transmitted = 0;           // contador estético
 
         // elementos DOM
         const aliceDisplay = document.getElementById('aliceDisplay');
         const bobDisplay = document.getElementById('bobDisplay');
+        const eveDisplay = document.getElementById('eveDisplay');
         const aliceBitsSpan = document.getElementById('aliceBitsCount');
         const bobMeasuresSpan = document.getElementById('bobMeasures');
         const matchSpan = document.getElementById('matchCount');
@@ -574,6 +629,7 @@
         const eveStatusText = document.getElementById('eveStatusText');
         const eveToggleBtn = document.getElementById('eveToggleBtn');
         const qubitSelect = document.getElementById('qubitCountSelect');
+        const evePercentInput = document.getElementById('evePercent');
         const aliceCompRow = document.getElementById('aliceCompRow');
         const bobCompRow = document.getElementById('bobCompRow');
         const matchCompRow = document.getElementById('matchCompRow');
@@ -584,9 +640,26 @@
         // helper: base aleatória Z ou X
         function randBase() { return randBit() === 0 ? 'Z' : 'X'; }
 
-        // Simula medição de um qubit com possível interceptação de Eve
-        function measureBit(bit, aliceBase, bobBase, withEve) {
-            if (withEve) {
+        // Escolhe quais posições serão interceptadas baseado no percentual
+        function chooseInterceptedPositions(count) {
+            const percent = parseInt(evePercentInput.value) || 50;
+            const numIntercepted = Math.round((percent / 100) * count);
+            const positions = new Array(count).fill(false);
+            // preenche aleatoriamente
+            let remaining = numIntercepted;
+            while (remaining > 0) {
+                const idx = Math.floor(Math.random() * count);
+                if (!positions[idx]) {
+                    positions[idx] = true;
+                    remaining--;
+                }
+            }
+            return positions;
+        }
+
+        // Simula medição de um qubit com possível interceptação de Eve (percentual)
+        function measureBit(bit, aliceBase, bobBase, withEve, interceptThis) {
+            if (withEve && interceptThis) {
                 const eveBase = randBase();
                 let bitAfterEve;
                 if (eveBase === aliceBase) {
@@ -594,39 +667,88 @@
                 } else {
                     bitAfterEve = randBit();
                 }
-                if (bobBase === eveBase) {
-                    return bitAfterEve;
-                } else {
-                    return randBit();
-                }
+                // registra para exibição
+                return {
+                    bobResult: (bobBase === eveBase) ? bitAfterEve : randBit(),
+                    eveBit: bitAfterEve,
+                    eveBase: eveBase
+                };
             } else {
-                if (bobBase === aliceBase) {
-                    return bit;
-                } else {
-                    return randBit();
-                }
+                // sem interceptação
+                return {
+                    bobResult: (bobBase === aliceBase) ? bit : randBit(),
+                    eveBit: null,
+                    eveBase: null
+                };
             }
         }
 
         // Atualiza toda a interface
         function refreshUI() {
-            // exibe alice
-            let aliceStr = '';
+            // exibe alice com chips coloridos
+            aliceDisplay.innerHTML = '';
             for (let i=0; i<aliceBits.length; i++) {
                 const bit = aliceBits[i];
                 const base = aliceBases[i];
-                aliceStr += `${bit}${base} `;
+                const text = `${bit}${base.toLowerCase()}`;
+                const chip = document.createElement('span');
+                chip.className = 'qubit-chip';
+                chip.textContent = text;
+                // verifica se é um match (mesma base e mesmo bit)
+                if (i < bobResults.length && i < bobBases.length) {
+                    if (aliceBases[i] === bobBases[i] && aliceBits[i] === bobResults[i]) {
+                        chip.classList.add('match-green');
+                    }
+                }
+                // se foi interceptado por Eve, pintar de vermelho
+                if (eveActive && eveIntercepted[i]) {
+                    chip.classList.add('intercepted-red');
+                }
+                aliceDisplay.appendChild(chip);
+                aliceDisplay.appendChild(document.createTextNode(' '));
             }
-            aliceDisplay.textContent = aliceStr || '—';
             aliceBitsSpan.textContent = aliceBits.length;
 
             // exibe bob
-            let bobStr = '';
+            bobDisplay.innerHTML = '';
             for (let i=0; i<bobResults.length; i++) {
-                bobStr += bobResults[i] + ' ';
+                const bit = bobResults[i];
+                const base = bobBases[i];
+                const text = `${bit}${base.toLowerCase()}`;
+                const chip = document.createElement('span');
+                chip.className = 'qubit-chip';
+                chip.textContent = text;
+                if (i < aliceBits.length && i < aliceBases.length) {
+                    if (aliceBases[i] === bobBases[i] && aliceBits[i] === bobResults[i]) {
+                        chip.classList.add('match-green');
+                    }
+                }
+                bobDisplay.appendChild(chip);
+                bobDisplay.appendChild(document.createTextNode(' '));
             }
-            bobDisplay.textContent = bobStr || '—';
             bobMeasuresSpan.textContent = bobResults.length;
+
+            // exibe eve (todos os interceptados já são, mas vamos pintar de vermelho)
+            eveDisplay.innerHTML = '';
+            if (eveActive) {
+                for (let i=0; i<eveBits.length; i++) {
+                    if (eveBits[i] !== null) {
+                        const text = `${eveBits[i]}${eveBases[i].toLowerCase()}`;
+                        const chip = document.createElement('span');
+                        chip.className = 'qubit-chip intercepted-red'; // vermelho
+                        chip.textContent = text;
+                        eveDisplay.appendChild(chip);
+                    } else {
+                        const chip = document.createElement('span');
+                        chip.className = 'qubit-chip';
+                        chip.textContent = '--';
+                        eveDisplay.appendChild(chip);
+                    }
+                    eveDisplay.appendChild(document.createTextNode(' '));
+                }
+            } else {
+                eveDisplay.innerHTML = '—';
+            }
 
             // calcular matches e sifting
             let matches = 0;
@@ -677,7 +799,8 @@
 
             // contadores estéticos
             txCountSpan.textContent = transmitted;
-            eveCountSpan.innerHTML = `🕵️ interceptados: ${eveActive ? transmitted : 0}`;
+            const interceptedCount = eveActive ? eveIntercepted.filter(v=>v).length : 0;
+            eveCountSpan.innerHTML = `🕵️ interceptados: ${interceptedCount}`;
 
             // comparação detalhada
             if (aliceSiftedBits.length > 0) {
@@ -687,10 +810,11 @@
                 for (let i=0; i<aliceSiftedBits.length; i++) {
                     aliceLine += aliceSiftedBits[i] + ' ';
                     bobLine += bobSiftedBits[i] + ' ';
+                    // Agora cada símbolo é um span com classe específica
                     if (aliceSiftedBits[i] === bobSiftedBits[i]) {
-                        matchLine += '✓ ';
+                        matchLine += '<span class="match-ok">✓</span> ';
                     } else {
-                        matchLine += '✗ ';
+                        matchLine += '<span class="match-err">✗</span> ';
                     }
                 }
                 aliceCompRow.innerHTML = `<span style="color:#c0b0ff;">Alice:</span> ${aliceLine}`;
@@ -714,11 +838,14 @@
             }
             bobBases = [];
             bobResults = [];
+            eveIntercepted = [];
+            eveBits = [];
+            eveBases = [];
             transmitted = count;
             refreshUI();
         }
 
-        // Bob realiza as medições
+        // Bob realiza as medições (com ou sem Eve, baseado no percentual)
         function measureAll() {
             if (aliceBits.length === 0) {
                 alert('Gere os qubits primeiro!');
@@ -728,11 +855,26 @@
             bobResults = [];
             transmitted = aliceBits.length;
 
+            // se eve ativa, decide quais posições serão interceptadas
+            if (eveActive) {
+                eveIntercepted = chooseInterceptedPositions(aliceBits.length);
+                eveBits = new Array(aliceBits.length).fill(null);
+                eveBases = new Array(aliceBits.length).fill(null);
+            } else {
+                eveIntercepted = new Array(aliceBits.length).fill(false);
+                eveBits = [];
+                eveBases = [];
+            }
+
             for (let i=0; i<aliceBits.length; i++) {
                 const bobBase = randBase();
                 bobBases.push(bobBase);
-                const measured = measureBit(aliceBits[i], aliceBases[i], bobBase, eveActive);
-                bobResults.push(measured);
+                const result = measureBit(aliceBits[i], aliceBases[i], bobBase, eveActive, eveIntercepted[i]);
+                bobResults.push(result.bobResult);
+                if (eveActive && eveIntercepted[i]) {
+                    eveBits[i] = result.eveBit;
+                    eveBases[i] = result.eveBase;
+                }
             }
             refreshUI();
         }
@@ -747,6 +889,7 @@
                 eveToggleBtn.classList.remove('active');
                 eveStatusText.textContent = 'Eve desativada';
             }
+            // não mede automaticamente, só atualiza display
             refreshUI();
         }
 

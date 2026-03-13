@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BB84 · Simulador Quântico Moderno</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0615 0%, #140c24 100%);
+            color: #eae6f5;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            background: linear-gradient(135deg, #c0b9ff, #a084f0, #7b5cf0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #dad5ff, #b6a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            border-left: 6px solid #7b5cf0;
+            padding-left: 1rem;
+        }
+
+        .subhead {
+            font-size: 1.2rem;
+            color: #b7acd9;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid #2f254a;
+            padding-bottom: 1.5rem;
+        }
+
+        .card {
+            background: rgba(20, 12, 36, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(123, 92, 240, 0.2);
+            border-radius: 2rem;
+            padding: 1.8rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(160, 132, 240, 0.1) inset;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(160, 132, 240, 0.4);
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(145deg, #2a1c44, #1e1333);
+            border: 1px solid #4d3a77;
+            border-radius: 60px;
+            padding: 0.3rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #cfc3ff;
+        }
+
+        .grid-2, .grid-3, .grid-4 {
+            display: grid;
+            gap: 2rem;
+            margin: 2.5rem 0;
+        }
+
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .pill-highlight {
+            background: linear-gradient(145deg, #2e2150, #1a1130);
+            border-radius: 3rem;
+            padding: 1.5rem 2rem;
+            border: 1px solid #5a44aa;
+            box-shadow: 0 8px 0 #0e0820;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, #d3c6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a122b;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 15px 30px -10px #00000080;
+        }
+
+        .compare-table th {
+            background: #2a1a47;
+            padding: 1rem;
+            font-weight: 500;
+            color: #cbb9ff;
+            text-align: left;
+        }
+
+        .compare-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #332653;
+        }
+
+        .compare-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .check-yes {
+            color: #6fe7c5;
+            font-size: 1.3rem;
+        }
+        .check-no {
+            color: #ff7791;
+            font-size: 1.3rem;
+        }
+
+        /* simulador */
+        .simulator-panel {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 1.2fr;
+            gap: 1rem;
+            align-items: stretch;
+            margin-top: 2rem;
+        }
+
+        .party-card {
+            background: #1a1130;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #4f3a81;
+            box-shadow: 0 15px 0 #0d0820;
+        }
+
+        .party-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .qubit-row {
+            background: #0e0920;
+            border-radius: 1rem;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #a78bfa;
+            border: 1px solid #382e5a;
+            margin: 1rem 0;
+            word-break: break-all;
+        }
+
+        .button-glow {
+            background: linear-gradient(135deg, #7b5cf0, #5f3dc9);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 3rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 #321f70, 0 10px 20px -5px #000;
+            border: 1px solid #ae9aff;
+        }
+
+        .button-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #321f70, 0 15px 25px -5px #000;
+        }
+
+        .button-glow:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #321f70;
+        }
+
+        /* toggle eve */
+        .eve-toggle-btn {
+            background: #2a1a47;
+            border: 2px solid #5f4a99;
+            color: #cfc3ff;
+            font-weight: 700;
+            padding: 0.8rem 1.8rem;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+        }
+
+        .eve-toggle-btn.active {
+            background: #ff7791;
+            border-color: #ffb0c0;
+            color: #1a0f2a;
+            box-shadow: 0 0 15px #ff7791;
+        }
+
+        .eve-toggle-btn .indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #5f4a99;
+        }
+
+        .eve-toggle-btn.active .indicator {
+            background: #ff1f4f;
+            box-shadow: 0 0 10px red;
+        }
+
+        /* seletor de qubits */
+        .qubit-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #1e1333;
+            padding: 0.5rem 1rem;
+            border-radius: 3rem;
+            border: 1px solid #4d3a77;
+            margin-bottom: 1rem;
+        }
+
+        .qubit-selector select {
+            background: #2e2150;
+            color: white;
+            border: 1px solid #7b5cf0;
+            border-radius: 2rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* comparação bits */
+        .comparison-row {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            word-break: break-all;
+            background: #0e0920;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid #382e5a;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            margin-top: 5rem;
+            text-align: center;
+            color: #6a5a8a;
+            border-top: 1px solid #2f254a;
+            padding-top: 2rem;
+        }
+
+        @media (max-width: 800px) {
+            .grid-2, .grid-3, .grid-4, .simulator-panel { grid-template-columns: 1fr; }
+            h1 { font-size: 2.5rem; }
+        }
+
+        .reference-link {
+            color: #b6a6ff;
+            text-decoration: none;
+            border-bottom: 1px dashed #7b5cf0;
+        }
+        .reference-link:hover {
+            color: #d7ccff;
+            border-bottom-style: solid;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- cabeçalho -->
+    <div style="margin-bottom: 3rem;">
+        <h1>⚛️ BB84 · DISTRIBUIÇÃO QUÂNTICA DE CHAVES</h1>
+        <div class="subhead">
+            Simulação interativa do primeiro protocolo de criptografia quântica (1984) — segurança baseada nas leis da física, não na complexidade matemática.
+        </div>
+    </div>
+
+    <!-- badges rápidos com explicações -->
+    <div class="grid-3" style="margin-bottom: 3rem;">
+        <div class="pill-highlight">
+            <span class="stat-number">∞</span>
+            <div style="font-size: 1.4rem; font-weight: 500;">Invulnerável</div>
+            <div style="color: #b0a0d0;">Baseado no <strong>Teorema da Não-Clonagem</strong>: é impossível copiar um estado quântico desconhecido.</div>
+        </div>
+        <div class="pill-highlight">
+            <span class="stat-number">✓</span>
+            <div style="font-size: 1.4rem; font-weight: 500;">Detecção total</div>
+            <div style="color: #b0a0d0;">Qualquer interceptação perturba o estado quântico, introduzindo erros detectáveis (QBER).</div>
+        </div>
+        <div class="pill-highlight">
+            <span class="stat-number">∞</span>
+            <div style="font-size: 1.4rem; font-weight: 500;">Futuro‑prova</div>
+            <div style="color: #b0a0d0;">Resistente a computadores quânticos — a segurança é física, não matemática.</div>
+        </div>
+    </div>
+
+    <!-- fundamentos: bases + explicação das bases conjugadas -->
+    <h2>🧬 Bases de codificação (observáveis conjugadas)</h2>
+    <div class="grid-2">
+        <div class="card">
+            <h3 style="color:#b6a6ff; display:flex; gap:0.5rem;">↕️ Base retilínea (Z) <span class="badge">0° / 90°</span></h3>
+            <p>Polarização horizontal (0°) representa bit <strong>0</strong>, vertical (90°) representa bit <strong>1</strong>. Esses estados são ortogonais entre si e formam uma base.</p>
+            <div style="display:flex; gap:2rem; margin-top:1rem;">
+                <div><span style="font-size:2rem;">↔️</span> |0⟩ = 0°</div>
+                <div><span style="font-size:2rem;">↕️</span> |1⟩ = 90°</div>
+            </div>
+            <p style="margin-top:1rem; font-size:0.9rem; color:#b7acd9;">Na notação de Dirac: |0⟩ e |1⟩</p>
+        </div>
+        <div class="card">
+            <h3 style="color:#b6a6ff; display:flex; gap:0.5rem;">✖️ Base diagonal (X) <span class="badge">45° / 135°</span></h3>
+            <p>Polarização diagonal 45° representa bit <strong>0</strong>, 135° representa bit <strong>1</strong>. Estados não ortogonais aos da base Z.</p>
+            <div style="display:flex; gap:2rem; margin-top:1rem;">
+                <div><span style="font-size:2rem;">⬉</span> |+⟩ = 45°</div>
+                <div><span style="font-size:2rem;">⬈</span> |−⟩ = 135°</div>
+            </div>
+            <p style="margin-top:1rem; font-size:0.9rem; color:#b7acd9;">|+⟩ = (|0⟩+|1⟩)/√2,  |−⟩ = (|0⟩-|1⟩)/√2</p>
+        </div>
+    </div>
+    <div class="card" style="margin-top:-1rem; margin-bottom:2rem;">
+        <p><strong>🔍 Por que duas bases?</strong> O princípio de <strong>codificação conjugada</strong> (Stephen Wiesner, 1970) garante que, se um espião (Eve) medir na base errada, ele não só obtém um resultado aleatório, mas também perturba o estado, criando erros que Alice e Bob podem detectar.</p>
+    </div>
+
+    <!-- etapas do protocolo (detalhadas) -->
+    <h2>📋 Etapas do protocolo BB84</h2>
+    <div class="grid-3" style="margin:2rem 0 2rem;">
+        <div class="card"> <strong style="color:#c5b0ff;">01 preparação</strong><br>Alice gera bits aleatórios e escolhe bases aleatórias (Z ou X) para cada bit. Ela prepara os qubits de acordo.</div>
+        <div class="card"> <strong style="color:#c5b0ff;">02 transmissão</strong><br>Os qubits são enviados pelo canal quântico (fibra ou espaço livre).</div>
+        <div class="card"> <strong style="color:#c5b0ff;">03 medição</strong><br>Bob escolhe aleatoriamente uma base (Z ou X) para medir cada qubit e registra o resultado.</div>
+        <div class="card"> <strong style="color:#c5b0ff;">04 sifting (peneiramento)</strong><br>Pelo canal público, Alice e Bob comparam as bases usadas (não os bits). Mantêm apenas os bits onde usaram a mesma base.</div>
+        <div class="card"> <strong style="color:#c5b0ff;">05 estimativa de erro (QBER)</strong><br>Divulgam uma amostra dos bits para calcular a taxa de erro quântico. Se QBER &lt; 11%, prosseguem; se maior, abortam (possível espiã).</div>
+        <div class="card"> <strong style="color:#c5b0ff;">06 correção e amplificação</strong><br>Aplicam algoritmos clássicos de correção de erros e amplificação de privacidade para gerar a chave final secreta.</div>
+    </div>
+
+    <!-- ========== SIMULADOR INTERATIVO ========== -->
+    <h2>🧪 Laboratório quântico · Simulador BB84</h2>
+    
+    <!-- Controles de quantidade e Eve -->
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+        <div class="qubit-selector">
+            <label style="font-weight:500;">Número de qubits:</label>
+            <select id="qubitCountSelect">
+                <option value="8">8</option>
+                <option value="16" selected>16</option>
+                <option value="32">32</option>
+                <option value="64">64</option>
+            </select>
+        </div>
+        <div id="eveToggleBtn" class="eve-toggle-btn">
+            <span class="indicator"></span>
+            <span id="eveStatusText">Eve desativada</span>
+        </div>
+    </div>
+
+    <div class="simulator-panel">
+        <!-- Alice -->
+        <div class="party-card">
+            <div class="party-title">👩‍🔬 Alice · remetente</div>
+            <div style="margin-bottom:1rem;">
+                <span class="badge">bits preparados: <span id="aliceBitsCount">0</span></span>
+                <span class="badge">bases usadas</span>
+            </div>
+            <div id="aliceDisplay" class="qubit-row">—</div>
+            <button class="button-glow" id="generateBtn">✨ Gerar qubits</button>
+            <div style="margin-top:1rem; font-size:0.9rem;">Bits e bases (Z=↕️, X=✖️)</div>
+        </div>
+
+        <!-- Canal (visual) -->
+        <div class="party-card" style="justify-content: center; display: flex; flex-direction: column;">
+            <div style="text-align: center;">
+                <span style="font-size: 3rem;">🌀</span>
+                <div style="font-weight:600; margin:1rem 0;">CANAL QUÂNTICO</div>
+                <div style="margin-top:1rem; background:#00000030; border-radius:2rem; padding:0.8rem;">
+                    <span>📡 transmitidos: <span id="txCount">0</span></span><br>
+                    <span id="eveCountDisplay">🕵️ interceptados: 0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bob -->
+        <div class="party-card">
+            <div class="party-title">👨‍🔬 Bob · receptor</div>
+            <div style="margin-bottom:1rem;">
+                <span class="badge">medidas: <span id="bobMeasures">0</span></span>
+                <span class="badge">matches: <span id="matchCount">0</span></span>
+            </div>
+            <div id="bobDisplay" class="qubit-row">—</div>
+            <button class="button-glow" id="measureBtn">📏 Medir com bases aleatórias</button>
+            <div style="margin-top:1rem; font-size:0.9rem;">resultado das medições (bits)</div>
+        </div>
+    </div>
+
+    <!-- status de erro e chave -->
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; background: #1a122b; border-radius: 2rem; padding: 1.5rem; margin: 2rem 0 1rem 0;">
+        <div><span class="badge">🔐 chave bruta (após sifting):</span> <span id="siftedKey" style="font-family: monospace;">—</span></div>
+        <div><span class="badge">📊 QBER (erro estimado):</span> <span id="qberValue" style="font-weight:600;">0%</span></div>
+        <div><span class="badge">⚠️ segurança:</span> <span id="securityMsg" style="color:#6fe7c5;">✓ canal seguro</span></div>
+    </div>
+
+    <!-- Comparação bits de Alice e Bob (apenas bases iguais) -->
+    <div style="background: #1a122b; border-radius: 2rem; padding: 1.5rem; margin: 1rem 0 2rem 0;">
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+            <span class="badge">🔍 comparação (bases iguais)</span>
+            <span style="color: #b0a0d0;">bits de Alice / bits de Bob / acerto</span>
+        </div>
+        <div id="comparisonContainer">
+            <div class="comparison-row" id="aliceCompRow">—</div>
+            <div class="comparison-row" id="bobCompRow">—</div>
+            <div class="comparison-row" id="matchCompRow">—</div>
+        </div>
+        <p style="margin-top:1rem; font-size:0.9rem; color:#b7acd9;">✓ = bit idêntico (acerto), ✗ = erro (possível interceptação ou ruído). Com Eve ativa, erros aparecem.</p>
+    </div>
+
+    <!-- POR QUE É REVOLUCIONÁRIO -->
+    <h2>⚛️ Por que o BB84 é revolucionário</h2>
+    <div class="grid-4" style="margin-bottom:2rem;">
+        <div class="card">
+            <h3 style="color:#b6a6ff;">🔐 Segurança Incondicional</h3>
+            <p>Não depende da capacidade computacional do adversário, mas sim das leis da física quântica.</p>
+        </div>
+        <div class="card">
+            <h3 style="color:#b6a6ff;">👁️ Detecção de Eavesdropping</h3>
+            <p>Qualquer tentativa de interceptação perturba o estado e é detectada pela taxa de erro (QBER).</p>
+        </div>
+        <div class="card">
+            <h3 style="color:#b6a6ff;">📜 Teorema da Não-Clonagem</h3>
+            <p>É impossível criar uma cópia perfeita de um estado quântico desconhecido — Eve não pode simplesmente copiar os qubits.</p>
+        </div>
+        <div class="card">
+            <h3 style="color:#b6a6ff;">🎭 One-Time Pad</h3>
+            <p>A chave gerada pode ser usada com o One-Time Pad, o único sistema criptográfico com segurança matemática provada.</p>
+        </div>
+    </div>
+
+    <!-- APLICAÇÕES REAIS -->
+    <h2>🌍 Aplicações reais do BB84</h2>
+    <div class="grid-4" style="margin-bottom:3rem;">
+        <div class="card">
+            <span style="font-size:2rem;">🏛️</span>
+            <h3 style="color:#b6a6ff; margin:0.5rem 0;">Governamental</h3>
+            <p>Proteção de informações classificadas e comunicações diplomáticas.</p>
+        </div>
+        <div class="card">
+            <span style="font-size:2rem;">💰</span>
+            <h3 style="color:#b6a6ff; margin:0.5rem 0;">Financeiro</h3>
+            <p>Segurança para transações bancárias e transferências internacionais.</p>
+        </div>
+        <div class="card">
+            <span style="font-size:2rem;">⚡</span>
+            <h3 style="color:#b6a6ff; margin:0.5rem 0;">Infraestrutura Crítica</h3>
+            <p>Proteção de redes de energia, água e sistemas de controle industrial.</p>
+        </div>
+        <div class="card">
+            <span style="font-size:2rem;">🧠</span>
+            <h3 style="color:#b6a6ff; margin:0.5rem 0;">Computação Quântica</h3>
+            <p>Preparação para a era pós-quântica (criptografia quantum-safe).</p>
+        </div>
+    </div>
+
+    <!-- Tabela comparativa -->
+    <h2>🔬 BB84 vs criptografia clássica</h2>
+    <table class="compare-table">
+        <thead><tr><th>Aspecto</th><th>BB84 (quântico)</th><th>RSA/AES (clássico)</th></tr></thead>
+        <tbody>
+            <tr><td>Base de segurança</td><td>Leis da física quântica</td><td>Complexidade computacional</td></tr>
+            <tr><td>Resistência a quantum</td><td><span class="check-yes">✓ inviolável</span></td><td><span class="check-no">✗ vulnerável</span></td></tr>
+            <tr><td>Detecção de interceptação</td><td><span class="check-yes">✓ imediata</span></td><td><span class="check-no">✗ não detecta</span></td></tr>
+            <tr><td>Prova matemática</td><td>incondicional</td><td>computacional</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Perguntas Frequentes -->
+    <h2 style="margin-top:4rem;">❓ perguntas frequentes</h2>
+    <div class="grid-2">
+        <div class="card">
+            <strong>O que é QBER?</strong><br>
+            Quantum Bit Error Rate — taxa de erro nos bits onde as bases coincidiram. Acima de 11% indica possível espionagem. Em sistemas reais, ruído e imperfeições também contribuem.
+        </div>
+        <div class="card">
+            <strong>Qual a origem do nome BB84?</strong><br>
+            Das iniciais dos criadores (Bennett & Brassard) e do ano de publicação: 1984.
+        </div>
+        <div class="card">
+            <strong>Teorema da não‑clonagem?</strong><br>
+            É impossível criar uma cópia exata de um estado quântico desconhecido. Isso impede que um espião duplique qubits.
+        </div>
+        <div class="card">
+            <strong>Limitações práticas?</strong><br>
+            Distância máxima em fibra (~100-400km), necessidade de fontes de fótons únicos (ou atenuação) e detetores com ruído (dark counts).
+        </div>
+    </div>
+
+    <!-- REFERÊNCIA ORIGINAL -->
+    <div style="background: #1e1333; border-radius: 2rem; padding: 2rem; margin: 4rem 0 2rem; border: 1px solid #5a44aa; text-align: center;">
+        <h3 style="color:#d7ccff; margin-bottom:1rem;">📜 O Protocolo Original (1984)</h3>
+        <p style="font-size:1.1rem; max-width:800px; margin:0 auto 1.5rem;">
+            <strong>Bennett, C. H., & Brassard, G. (1984).</strong> "Quantum cryptography: Public key distribution and coin tossing." 
+            In <em>Proceedings of IEEE International Conference on Computers, Systems and Signal Processing</em>, Bangalore, India, pp. 175–179.
+        </p>
+        <div style="display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap;">
+            <a href="https://www.sciencedirect.com/science/article/pii/S0304397514004241" target="_blank" class="reference-link">🔗 ScienceDirect (reimpressão)</a>
+            <a href="https://www.karlin.mff.cuni.cz/~holub/soubory/BB84original.pdf" target="_blank" class="reference-link">📘 Original</a>
+            
+        </div>
+        <p style="margin-top:1.5rem; color:#b7acd9; font-size:0.9rem;">
+            Este artigo lançou as bases da distribuição quântica de chaves e completa mais de 40 anos de impacto na criptografia.
+        </p>
+    </div>
+
+    <footer>
+        Simulação conceitual do protocolo BB84 · baseada no artigo de Bennett & Brassard (1984)<br>
+        visual moderno e interatividade para aprendizado · desenvolvido para fins educacionais
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // -------------------- estado global --------------------
+        let aliceBits = [];           // array de bits 0/1
+        let aliceBases = [];          // array de bases: 'Z' ou 'X'
+        let bobBases = [];            // bases que bob escolhe para medir
+        let bobResults = [];          // bits que bob obteve (após medição)
+        let eveActive = false;        // espiã ativada?
+        let transmitted = 0;           // contador estético (não interfere no cálculo)
+
+        // elementos DOM
+        const aliceDisplay = document.getElementById('aliceDisplay');
+        const bobDisplay = document.getElementById('bobDisplay');
+        const aliceBitsSpan = document.getElementById('aliceBitsCount');
+        const bobMeasuresSpan = document.getElementById('bobMeasures');
+        const matchSpan = document.getElementById('matchCount');
+        const siftedSpan = document.getElementById('siftedKey');
+        const qberSpan = document.getElementById('qberValue');
+        const securityMsg = document.getElementById('securityMsg');
+        const txCountSpan = document.getElementById('txCount');
+        const eveCountSpan = document.getElementById('eveCountDisplay');
+        const eveStatusText = document.getElementById('eveStatusText');
+        const eveToggleBtn = document.getElementById('eveToggleBtn');
+        const qubitSelect = document.getElementById('qubitCountSelect');
+        const aliceCompRow = document.getElementById('aliceCompRow');
+        const bobCompRow = document.getElementById('bobCompRow');
+        const matchCompRow = document.getElementById('matchCompRow');
+
+        // helper: gera inteiro aleatório 0/1
+        function randBit() { return Math.random() < 0.5 ? 0 : 1; }
+
+        // helper: base aleatória Z ou X
+        function randBase() { return randBit() === 0 ? 'Z' : 'X'; }
+
+        // Simula medição de um qubit com possível interceptação de Eve
+        function measureBit(bit, aliceBase, bobBase, withEve) {
+            if (withEve) {
+                const eveBase = randBase();
+                let bitAfterEve;
+                if (eveBase === aliceBase) {
+                    bitAfterEve = bit;
+                } else {
+                    bitAfterEve = randBit();
+                }
+                if (bobBase === eveBase) {
+                    return bitAfterEve;
+                } else {
+                    return randBit();
+                }
+            } else {
+                if (bobBase === aliceBase) {
+                    return bit;
+                } else {
+                    return randBit();
+                }
+            }
+        }
+
+        // Atualiza toda a interface
+        function refreshUI() {
+            // exibe alice
+            let aliceStr = '';
+            for (let i=0; i<aliceBits.length; i++) {
+                const bit = aliceBits[i];
+                const base = aliceBases[i];
+                aliceStr += `${bit}${base} `;
+            }
+            aliceDisplay.textContent = aliceStr || '—';
+            aliceBitsSpan.textContent = aliceBits.length;
+
+            // exibe bob
+            let bobStr = '';
+            for (let i=0; i<bobResults.length; i++) {
+                bobStr += bobResults[i] + ' ';
+            }
+            bobDisplay.textContent = bobStr || '—';
+            bobMeasuresSpan.textContent = bobResults.length;
+
+            // calcular matches e sifting
+            let matches = 0;
+            let sifted = [];
+            let aliceSiftedBits = [];
+            let bobSiftedBits = [];
+
+            for (let i=0; i<Math.min(aliceBits.length, bobResults.length, aliceBases.length, bobBases.length); i++) {
+                if (aliceBases[i] === bobBases[i]) {
+                    matches++;
+                    aliceSiftedBits.push(aliceBits[i]);
+                    bobSiftedBits.push(bobResults[i]);
+                    if (aliceBits[i] === bobResults[i]) {
+                        sifted.push(aliceBits[i]);
+                    } else {
+                        sifted.push('?');
+                    }
+                }
+            }
+            matchSpan.textContent = matches;
+
+            let siftedStr = sifted.map(x => x===0||x===1?x:'?').join('');
+            siftedSpan.textContent = siftedStr || '—';
+
+            // calcular QBER
+            let errors = 0;
+            let totalSameBase = 0;
+            for (let i=0; i<Math.min(aliceBits.length, bobResults.length, aliceBases.length, bobBases.length); i++) {
+                if (aliceBases[i] === bobBases[i]) {
+                    totalSameBase++;
+                    if (aliceBits[i] !== bobResults[i]) errors++;
+                }
+            }
+            const qber = totalSameBase > 0 ? ((errors / totalSameBase) * 100).toFixed(1) : 0;
+            qberSpan.textContent = qber + '%';
+
+            // segurança
+            if (eveActive && errors > 0) {
+                securityMsg.innerHTML = '⚠️ possível espiã detectada (QBER > 0)';
+                securityMsg.style.color = '#ff7791';
+            } else if (eveActive && errors === 0 && totalSameBase>0) {
+                securityMsg.innerHTML = '👾 Eve ativa mas não causou erro (improvável)';
+                securityMsg.style.color = '#ffb86b';
+            } else {
+                securityMsg.innerHTML = '✓ canal seguro';
+                securityMsg.style.color = '#6fe7c5';
+            }
+
+            // contadores estéticos
+            txCountSpan.textContent = transmitted;
+            eveCountSpan.innerHTML = `🕵️ interceptados: ${eveActive ? transmitted : 0}`;
+
+            // comparação detalhada
+            if (aliceSiftedBits.length > 0) {
+                let aliceLine = '';
+                let bobLine = '';
+                let matchLine = '';
+                for (let i=0; i<aliceSiftedBits.length; i++) {
+                    aliceLine += aliceSiftedBits[i] + ' ';
+                    bobLine += bobSiftedBits[i] + ' ';
+                    if (aliceSiftedBits[i] === bobSiftedBits[i]) {
+                        matchLine += '✓ ';
+                    } else {
+                        matchLine += '✗ ';
+                    }
+                }
+                aliceCompRow.innerHTML = `<span style="color:#c0b0ff;">Alice:</span> ${aliceLine}`;
+                bobCompRow.innerHTML = `<span style="color:#c0b0ff;">Bob:</span>   ${bobLine}`;
+                matchCompRow.innerHTML = `<span style="color:#c0b0ff;">acerto:</span> ${matchLine}`;
+            } else {
+                aliceCompRow.innerHTML = '—';
+                bobCompRow.innerHTML = '—';
+                matchCompRow.innerHTML = '—';
+            }
+        }
+
+        // Gerar novos qubits
+        function generateQubits() {
+            const count = parseInt(qubitSelect.value);
+            aliceBits = [];
+            aliceBases = [];
+            for (let i=0; i<count; i++) {
+                aliceBits.push(randBit());
+                aliceBases.push(randBase());
+            }
+            bobBases = [];
+            bobResults = [];
+            transmitted = count;
+            refreshUI();
+        }
+
+        // Bob realiza as medições
+        function measureAll() {
+            if (aliceBits.length === 0) {
+                alert('Gere os qubits primeiro!');
+                return;
+            }
+            bobBases = [];
+            bobResults = [];
+            transmitted = aliceBits.length;
+
+            for (let i=0; i<aliceBits.length; i++) {
+                const bobBase = randBase();
+                bobBases.push(bobBase);
+                const measured = measureBit(aliceBits[i], aliceBases[i], bobBase, eveActive);
+                bobResults.push(measured);
+            }
+            refreshUI();
+        }
+
+        // toggle Eve
+        function toggleEve() {
+            eveActive = !eveActive;
+            if (eveActive) {
+                eveToggleBtn.classList.add('active');
+                eveStatusText.textContent = 'Eve ativada';
+            } else {
+                eveToggleBtn.classList.remove('active');
+                eveStatusText.textContent = 'Eve desativada';
+            }
+            refreshUI();
+        }
+
+        // eventos
+        document.getElementById('generateBtn').addEventListener('click', generateQubits);
+        document.getElementById('measureBtn').addEventListener('click', measureAll);
+        eveToggleBtn.addEventListener('click', toggleEve);
+
+        // inicialização
+        generateQubits();
+    })();
+</script>
+</body>
+</html>
